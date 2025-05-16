@@ -29,8 +29,8 @@ AItoAIlang provides a suite of analytical tools to examine how language and cult
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/AItoAIlang.git
-   cd AItoAIlang
+   git clone https://github.com/yourusername/ErgativeAgents.git
+   cd ErgativeAgents
    ```
 
 2. Install dependencies:

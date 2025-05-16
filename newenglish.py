@@ -46,9 +46,13 @@ class ModelDebate:
             print(error_msg)
             return error_msg, timestamp
 
-    def multi_exchange(self, question: str, models: List[str], rounds: int = 4) -> List[Dict[str, Any]]:
+    def multi_exchange(self, question: str, models: List[str], rounds: int = 15) -> List[Dict[str, Any]]:
         """Run a back-and-forth debate for a fixed number of rounds, logging detailed exchange info."""
-        system_prompt_content = "You are in a debate. You have a 180-token limit per response. Directly address the other side's arguments first, then present your counterpoints. Be strategic but thorough in your engagement with opposing views. Ensure your response is complete and ends with a proper conclusion."
+        system_prompt_content = """You are in a debate. You have a 180-token limit per response. Directly address the other side's arguments first, then present your counterpoints. Be strategic but thorough in your engagement with opposing views. Ensure your response is complete and ends with a proper conclusion.
+
+After 15 turns of dialogue, you must propose a sentence beginning with:
+"Based on our discussion, we propose that…"
+The proposals may converge or remain distinct. The goal is not consensus, but normative articulation. Your proposal should include justification for your position based on the key points discussed during the debate."""
         
         history_a = [
             {"role": "system", "content": system_prompt_content},
@@ -120,11 +124,11 @@ def main():
         
         debate_setup_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         file_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(logs_dir, f"english_{file_timestamp}.jsonl")
+        filename = os.path.join(logs_dir, f"newenglish_{file_timestamp}.jsonl")
         
         question = "Should AI be an open infrastructure or controlled by a few companies?"
         models_list = ["gpt-4o-2024-11-20", "gpt-4o-2024-11-20"]
-        num_rounds = 10
+        num_rounds = 15  # Changed to 15 rounds to align with proposal instruction
         
         exchange_log = debate.multi_exchange(question, models_list, rounds=num_rounds)
         

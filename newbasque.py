@@ -28,38 +28,47 @@ class ModelDebate:
             "model": model,
             "messages": history,
             "temperature": 0.9,
-            "max_tokens": 180
+            "max_tokens": 180  # Same as englishdebate.py, ensure consistency if changed
         }
         
         try:
             response = requests.post(self.api_base, headers=headers, json=data)
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f") # Timestamp with microseconds
             j = response.json()
             if response.status_code != 200:
                 err = j.get("error", {}).get("message", response.text)
                 print(f"OpenAI error: {err}")
-                return f"API error: {err}", timestamp
+                # Return error as content
+                return f"API error: {err}", timestamp 
             return j['choices'][0]['message']['content'].strip(), timestamp
         except Exception as e:
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f") # Timestamp for error
             error_msg = f"Error getting response: {str(e)}"
             print(error_msg)
             return error_msg, timestamp
 
-    def multi_exchange(self, question: str, models: List[str], rounds: int = 4) -> List[Dict[str, Any]]:
+    def multi_exchange(self, question: str, models: List[str], rounds: int = 15) -> List[Dict[str, Any]]:
         """Run a back-and-forth debate for a fixed number of rounds, logging detailed exchange info."""
-        system_prompt_content = "You are in a debate. You have a 180-token limit per response. Directly address the other side's arguments first, then present your counterpoints. Be strategic but thorough in your engagement with opposing views. Ensure your response is complete and ends with a proper conclusion."
+        # Updated System prompt for Basque with proposal instruction
+        system_prompt_content = """Eztabaida batean zaude. Erantzun bakarrik euskaraz. 180 tokeneko muga duzu erantzun bakoitzean. 
+Lehenik eta behin, beste aldearen argudioei erantzun zuzena eman, eta ondoren zure kontrapuntuak aurkeztu. 
+Izan zaitez estrategikoa eta sakona, baina laburra. Ziurtatu zure erantzuna osatua dela eta amaiera egokia duela.
+
+15 elkarrizketa txanden ondoren, esaldi bat proposatu behar duzu honekin hasita:
+"Gure eztabaidan oinarrituta, proposatzen dugu..."
+Proposamenak bat etor daitezke edo desberdinak izan daitezke. Helburua ez da adostasuna, baizik eta artikulazio normatiboa. Zure proposamenak zure posizioaren justifikazioa eduki behar du, eztabaidan zehar aipatutako puntu garrantzitsuetan oinarrituta."""
         
         history_a = [
             {"role": "system", "content": system_prompt_content},
-            {"role": "user", "content": question}
+            {"role": "user", "content": question} # Question will be in Basque from main
         ]
-        history_b = list(history_a)
+        history_b = list(history_a) # Create a distinct copy
         exchange_log = []
 
         for i in range(rounds):
             current_round_num = i + 1
 
+            # Agent A's turn
             reply_a_content, reply_a_timestamp = self.get_model_response(history_a, models[0])
             exchange_log.append({
                 "speaker": "Agent A", 
@@ -71,6 +80,7 @@ class ModelDebate:
             history_a.append({"role": "assistant", "content": reply_a_content})
             history_b.append({"role": "assistant", "content": reply_a_content})
 
+            # Agent B's turn
             reply_b_content, reply_b_timestamp = self.get_model_response(history_b, models[1])
             exchange_log.append({
                 "speaker": "Agent B", 
@@ -120,11 +130,12 @@ def main():
         
         debate_setup_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
         file_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = os.path.join(logs_dir, f"english_{file_timestamp}.jsonl")
+        filename = os.path.join(logs_dir, f"newbasque_{file_timestamp}.jsonl")
         
-        question = "Should AI be an open infrastructure or controlled by a few companies?"
+        # Define the question and models for Basque
+        question = "AA (Adimen Artifiziala) azpiegitura irekia izan beharko litzateke ala korporazio gutxi batzuek kontrolatu beharko lukete?"
         models_list = ["gpt-4o-2024-11-20", "gpt-4o-2024-11-20"]
-        num_rounds = 10
+        num_rounds = 15 # Changed to 15 rounds to align with proposal instruction
         
         exchange_log = debate.multi_exchange(question, models_list, rounds=num_rounds)
         
